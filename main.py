@@ -85,10 +85,10 @@ You deserve support — please reach out now."""
 
 
 # ---------------------------------------
-# Chat Start
+# Chat Start (FIXED)
 # ---------------------------------------
 @cl.on_chat_start
-async def on_start():
+async def on_start(data):
     conversation_memory.clear()
 
     await cl.Message("""
@@ -108,12 +108,12 @@ How are you feeling today?
 
 
 # ---------------------------------------
-# Message Handler
+# Message Handler (FIXED)
 # ---------------------------------------
 @cl.on_message
-async def message_handler(message: cl.Message):
+async def message_handler(message, data):
 
-    user_msg = message.content
+    user_msg = message["content"]
 
     # Save message to memory
     conversation_memory.append({"role": "user", "content": user_msg})
