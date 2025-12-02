@@ -2,144 +2,103 @@ import chainlit as cl
 from openai import OpenAI
 import os
 
-# Create OpenAI client (Render injects OPENAI_API_KEY)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# ---------------------------------------
-# Store short-term memory (last 10 msgs)
-# ---------------------------------------
 conversation_memory = []
 
-
-# ---------------------------------------
-# Helper: Generate AI responses
-# ---------------------------------------
 def ai_response(prompt):
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "You are a warm, empathetic mental health support assistant for college students."},
+            {"role": "system", "content": "You are a warm, empathetic mental health support assistant."},
             *conversation_memory,
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": prompt},
         ]
     )
     return response.choices[0].message["content"]
 
 
-# ---------------------------------------
-# Daily Wellness Challenge
-# ---------------------------------------
 def generate_daily_challenge():
-    prompt = """
-Generate 1 simple, actionable daily mental wellness challenge for students.
-Keep it short (2–3 lines).
-"""
+    prompt = "Generate 1 short wellness challenge for students (2–3 lines)."
     return ai_response(prompt)
 
 
-# ---------------------------------------
-# Journal Prompts
-# ---------------------------------------
 def generate_journal_prompts():
-    prompt = """
-Give 3 short mood journaling prompts for self-reflection.
-Keep them simple and supportive.
-"""
+    prompt = "Give 3 short mood journaling prompts for self-reflection."
     return ai_response(prompt)
 
 
-# ---------------------------------------
-# Support Flow
-# ---------------------------------------
 def mental_health_support(user_msg):
     prompt = f"""
-The user says: "{user_msg}"
+User: "{user_msg}"
 
 Provide:
-1. Empathetic reflection (2 lines)
-2. What emotion they may be feeling
-3. 2–3 grounding or coping strategies
-4. A gentle follow-up question
+1. 2-line empathetic reflection  
+2. Emotion they may be feeling  
+3. 2-3 grounding/coping strategies  
+4. Gentle follow-up question
 """
     return ai_response(prompt)
 
 
-# ---------------------------------------
-# Crisis Detection
-# ---------------------------------------
 def crisis_check(user_msg):
-    crisis_words = ["suicide", "kill myself", "end my life", "can't continue", "die", "self harm"]
+    crisis_keywords = ["suicide", "kill myself", "end my life", "can't continue", "self harm", "die"]
 
-    if any(word in user_msg.lower() for word in crisis_words):
+    if any(word in user_msg.lower() for word in crisis_keywords):
         return """⚠️ **Important Notice**
 
-I'm really sorry you're feeling this way.  
-Please contact someone who can help immediately:
+I'm really sorry you're feeling this way.
 
-📞 **AASRA Helpline (India): 9820466726**  
-📞 **Suicide & Crisis Lifeline (USA): 988**  
-🏥 Go to the nearest hospital or emergency room.
+☎️ **AASRA India:** 9820466726  
+☎️ **988 Suicide & Crisis Lifeline (USA)**  
+🏥 Visit the nearest hospital emergency room.
 
-You deserve support — please reach out now."""
+You deserve support — please reach out immediately."""
     return None
 
 
-# ---------------------------------------
-# Chat Start (FIXED)
-# ---------------------------------------
 @cl.on_chat_start
-async def on_start(data):
+async def on_chat_start(data):
     conversation_memory.clear()
 
     await cl.Message("""
 👋 **Welcome to the Mental Health Support Assistant**
 
-I'm here to listen and support you with stress, anxiety, exams, relationships, burnout, loneliness — anything on your mind.
+I'm here to support you with stress, anxiety, exam pressure, loneliness, burnout — anything on your mind.
 
-You can say things like:
-- "I'm stressed about exams"
-- "I feel lonely"
-- "Give me a wellness challenge"
-- "Give me journaling prompts"
-- "I'm anxious"
+Try:
+- "I'm stressed"
+- "Give me a challenge"
+- "journal prompts"
+- "I feel anxious"
 
 How are you feeling today?
 """).send()
 
 
-# ---------------------------------------
-# Message Handler (FIXED)
-# ---------------------------------------
 @cl.on_message
-async def message_handler(message, data):
-
+async def on_message(message, data):
     user_msg = message["content"]
 
-    # Save message to memory
     conversation_memory.append({"role": "user", "content": user_msg})
-    conversation_memory[:] = conversation_memory[-10:]  # keep last 10
+    conversation_memory[:] = conversation_memory[-10:]
 
-    # Crisis check
     crisis = crisis_check(user_msg)
     if crisis:
         await cl.Message(crisis).send()
         return
 
-    # Special commands
     if "challenge" in user_msg.lower():
-        out = generate_daily_challenge()
-        await cl.Message(f"🌱 **Your Daily Wellness Challenge:**\n\n{out}").send()
+        txt = generate_daily_challenge()
+        await cl.Message(f"🌱 **Your Daily Wellness Challenge:**\n\n{txt}").send()
         return
 
     if "journal" in user_msg.lower() or "prompt" in user_msg.lower():
-        out = generate_journal_prompts()
-        await cl.Message(f"📓 **Mood Journaling Prompts:**\n\n{out}").send()
+        txt = generate_journal_prompts()
+        await cl.Message(f"📓 **Journal Prompts:**\n\n{txt}").send()
         return
 
-    # Default support message
     reply = mental_health_support(user_msg)
-
-    # Save assistant reply to memory
     conversation_memory.append({"role": "assistant", "content": reply})
     conversation_memory[:] = conversation_memory[-10:]
 
