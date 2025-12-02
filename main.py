@@ -81,7 +81,7 @@ You deserve support — please contact someone now."""
 # Chainlit Chat Start
 # -----------------------------
 @cl.on_chat_start
-async def start():
+async def on_start():
     await cl.Message("""
 👋 **Welcome to the Mental Health Support Assistant**
 
