@@ -1066,8 +1066,10 @@ async def get_ai_response(user_message: str, scenario: Optional[str] = None) -> 
             temperature=0.7,
             max_tokens=500
         )
+        # Handle the response properly (OpenAI v1.0+ uses attribute access)
         return response.choices[0].message.content
     except Exception as e:
+        print(f"OpenAI API Error: {e}")  # Log for debugging
         return f"I'm having trouble connecting right now. Please try again in a moment. If you're in crisis, please reach out to a helpline. 💙"
 
 
@@ -1266,12 +1268,12 @@ async def on_chat_start():
     """Initialize the chat session."""
     # Set up quick action buttons
     actions = [
-        cl.Action(name="menu", label="📋 Menu", value="menu"),
-        cl.Action(name="mood", label="📊 Track Mood", value="mood"),
-        cl.Action(name="challenge", label="🌱 Challenge", value="challenge"),
-        cl.Action(name="resources", label="📚 Resources", value="resources"),
-        cl.Action(name="breathe", label="🧘 Breathe", value="breathe"),
-        cl.Action(name="crisis", label="🆘 Crisis Help", value="crisis"),
+        cl.Action(name="menu", payload="menu", label="📋 Menu"),
+        cl.Action(name="mood", payload="mood", label="📊 Track Mood"),
+        cl.Action(name="challenge", payload="challenge", label="🌱 Challenge"),
+        cl.Action(name="resources", payload="resources", label="📚 Resources"),
+        cl.Action(name="breathe", payload="breathe", label="🧘 Breathe"),
+        cl.Action(name="crisis", payload="crisis", label="🆘 Crisis Help"),
     ]
     
     welcome_message = """
@@ -1530,9 +1532,9 @@ Type the number or name.
     # Add quick actions based on context
     actions = []
     if any(word in user_msg_lower for word in ["anxious", "stressed", "panic", "overwhelmed"]):
-        actions.append(cl.Action(name="breathe", label="🧘 Try Breathing Exercise", value="breathe"))
+        actions.append(cl.Action(name="breathe", payload="breathe", label="🧘 Try Breathing Exercise"))
     if any(word in user_msg_lower for word in ["sad", "down", "depressed", "low"]):
-        actions.append(cl.Action(name="resources", label="📚 View Resources", value="resources"))
+        actions.append(cl.Action(name="resources", payload="resources", label="📚 View Resources"))
     
     await cl.Message(
         content=response,
