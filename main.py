@@ -9,14 +9,13 @@ Features:
 - Crisis detection and escalation
 - Guided breathing/meditation exercises
 - Journal prompts
-- Coping strategies
+- Coping strategies (emotion-specific)
 """
 
 import chainlit as cl
 from openai import OpenAI
 import os
-import json
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 import random
 
@@ -130,7 +129,7 @@ SCENARIO_PROMPTS = {
 # ============================================================================
 
 RESOURCE_LIBRARY = {
-    "stress_management": {
+    "stress management": {
         "title": "📚 Stress Management",
         "content": """**Understanding & Managing Stress**
 
@@ -184,7 +183,7 @@ Anxiety is the most common mental health concern for college students. You're no
 • You're using substances to cope"""
     },
     
-    "depression_signs": {
+    "depression": {
         "title": "🌧️ Signs of Depression",
         "content": """**Recognizing Depression**
 
@@ -210,7 +209,7 @@ Depression is more than sadness—it's a persistent condition that affects how y
 **Important:** Depression is treatable. Reaching out is a sign of strength, not weakness."""
     },
     
-    "sleep_hygiene": {
+    "sleep": {
         "title": "😴 Sleep Hygiene",
         "content": """**Better Sleep for Students**
 
@@ -236,7 +235,7 @@ College schedules make good sleep challenging, but sleep affects everything—mo
 • Naps before 3 PM, under 30 minutes"""
     },
     
-    "exam_preparation": {
+    "exam anxiety": {
         "title": "📝 Exam Anxiety & Preparation",
         "content": """**Managing Exam Stress**
 
@@ -269,7 +268,7 @@ Some anxiety before exams is normal and can even help performance. Too much anxi
 • It will come back"""
     },
     
-    "loneliness_connection": {
+    "loneliness": {
         "title": "🤝 Loneliness & Building Connections",
         "content": """**Feeling Lonely at College**
 
@@ -324,7 +323,7 @@ Homesickness is grief for your old life while adjusting to a new one. It's compl
 It does get better. Give yourself grace during the transition."""
     },
     
-    "imposter_syndrome": {
+    "imposter syndrome": {
         "title": "🎭 Imposter Syndrome",
         "content": """**Feeling Like a Fraud**
 
@@ -383,7 +382,7 @@ Burnout isn't laziness—it's exhaustion from prolonged stress without adequate 
 **The "hustle culture" lie:** Burning out doesn't mean you worked hard. It means you worked unsustainably."""
     },
     
-    "healthy_relationships": {
+    "relationships": {
         "title": "💕 Healthy Relationships",
         "content": """**Building & Maintaining Healthy Relationships**
 
@@ -415,7 +414,7 @@ College relationships (romantic, friendships, roommates) can be wonderful and ch
 **Remember:** You deserve relationships that add to your life, not drain it."""
     },
     
-    "time_management": {
+    "time management": {
         "title": "⏰ Time Management",
         "content": """**Managing Time in College**
 
@@ -445,7 +444,7 @@ College gives you more freedom and less structure—this is both exciting and ch
 Do hard tasks when you're most alert. Save easy tasks for low-energy times."""
     },
     
-    "mindfulness_basics": {
+    "mindfulness": {
         "title": "🧘 Mindfulness Basics",
         "content": """**Introduction to Mindfulness**
 
@@ -476,7 +475,7 @@ Mindfulness: paying attention to the present moment without judgment. Simple con
 2 minutes daily > 20 minutes once a week. Consistency matters more than duration."""
     },
     
-    "self_compassion": {
+    "self compassion": {
         "title": "💚 Self-Compassion",
         "content": """**Being Kind to Yourself**
 
@@ -504,7 +503,7 @@ When struggling, say to yourself:
 Self-compassion increases resilience, motivation, and wellbeing. Self-criticism does the opposite."""
     },
     
-    "panic_attacks": {
+    "panic attacks": {
         "title": "😰 Managing Panic Attacks",
         "content": """**Understanding Panic Attacks**
 
@@ -536,7 +535,7 @@ A panic attack is a sudden surge of intense fear with physical symptoms. They're
 Regular stress management, sleep, exercise, and limiting caffeine can reduce frequency."""
     },
     
-    "substance_use": {
+    "substance use": {
         "title": "🍺 Substance Use Awareness",
         "content": """**Making Informed Choices**
 
@@ -568,7 +567,7 @@ College often involves exposure to alcohol and other substances. Here's what to 
 • It's okay to ask for help"""
     },
     
-    "grief_loss": {
+    "grief": {
         "title": "🕊️ Grief & Loss",
         "content": """**Navigating Grief**
 
@@ -595,7 +594,7 @@ The "stages" (denial, anger, bargaining, depression, acceptance) aren't steps. Y
 It's hard to grieve while keeping up with classes. Talk to professors—most will understand. Use campus counseling."""
     },
     
-    "social_anxiety": {
+    "social anxiety": {
         "title": "😓 Social Anxiety",
         "content": """**Managing Social Anxiety**
 
@@ -663,7 +662,7 @@ Perfectionism: setting extremely high standards and being highly self-critical w
 **Remember:** Done is better than perfect. Progress over perfection."""
     },
     
-    "financial_wellness": {
+    "financial stress": {
         "title": "💰 Financial Stress",
         "content": """**Managing Money Stress**
 
@@ -697,7 +696,7 @@ Financial stress is real stress. It affects mental health, academic performance,
 **Mindset:** Financial stress doesn't define your worth or future."""
     },
     
-    "seeking_help": {
+    "seeking help": {
         "title": "🆘 When & How to Seek Help",
         "content": """**Reaching Out for Support**
 
@@ -835,12 +834,12 @@ CRISIS_KEYWORDS = [
 # ============================================================================
 
 BREATHING_EXERCISES = {
-    "box_breathing": {
+    "box": {
         "name": "Box Breathing",
-        "duration": "4 minutes",
-        "description": "Used by Navy SEALs to stay calm under pressure.",
-        "steps": """
+        "content": """
 **Box Breathing Exercise** 📦
+
+Used by Navy SEALs to stay calm under pressure.
 
 1. **Inhale** slowly for 4 seconds
 2. **Hold** your breath for 4 seconds
@@ -851,14 +850,14 @@ Repeat 4 times.
 
 This activates your parasympathetic nervous system and reduces stress hormones.
 
-Would you like me to guide you through it step by step?"""
+How do you feel? 💙"""
     },
-    "478_breathing": {
+    "478": {
         "name": "4-7-8 Breathing",
-        "duration": "3 minutes",
-        "description": "Dr. Andrew Weil's relaxation technique.",
-        "steps": """
+        "content": """
 **4-7-8 Breathing Exercise** 🌬️
+
+Dr. Andrew Weil's relaxation technique.
 
 1. **Exhale** completely through your mouth
 2. **Inhale** quietly through your nose for **4 seconds**
@@ -869,14 +868,14 @@ Repeat 4 times.
 
 This is especially good for anxiety and falling asleep.
 
-Want me to walk you through it?"""
+How are you feeling now? 💙"""
     },
     "grounding": {
         "name": "5-4-3-2-1 Grounding",
-        "duration": "5 minutes",
-        "description": "Brings you back to the present moment.",
-        "steps": """
+        "content": """
 **5-4-3-2-1 Grounding Exercise** 🌳
+
+Brings you back to the present moment.
 
 Look around and find:
 
@@ -897,12 +896,14 @@ Look around and find:
 
 Take a deep breath. You are here. You are safe.
 
-How do you feel now?"""
+How do you feel now? 💙"""
     }
 }
 
 MEDITATION_SCRIPTS = {
-    "quick_calm": """
+    "calm": {
+        "name": "2-Minute Calm",
+        "content": """
 **2-Minute Calm** 🧘
 
 Find a comfortable position. Close your eyes if that feels okay.
@@ -917,9 +918,11 @@ You don't need to change anything right now. Just be here.
 
 One more deep breath... and when you're ready, gently open your eyes.
 
-You can return to this moment whenever you need it. 💙""",
-    
-    "body_scan": """
+You can return to this moment whenever you need it. 💙"""
+    },
+    "body scan": {
+        "name": "Quick Body Scan",
+        "content": """
 **Quick Body Scan** 🌟
 
 Close your eyes. Take three deep breaths.
@@ -936,9 +939,11 @@ Close your eyes. Take three deep breaths.
 
 **Legs & Feet**: Feel them supported by the ground.
 
-Take one more breath. You are whole. You are here. 💙""",
-    
-    "self_compassion": """
+Take one more breath. You are whole. You are here. 💙"""
+    },
+    "self compassion": {
+        "name": "Self-Compassion Meditation",
+        "content": """
 **Self-Compassion Meditation** 💚
 
 Place your hand on your heart. Feel its warmth.
@@ -958,24 +963,96 @@ Repeat silently or aloud:
 (Let it in)
 
 Breathe. You are worthy of kindness—especially your own. 💚"""
+    }
+}
+
+# ============================================================================
+# COPING STRATEGIES (Emotion-Specific)
+# ============================================================================
+
+COPING_STRATEGIES = {
+    "anxiety": {
+        "title": "Coping with Anxiety",
+        "strategies": [
+            "Try the 5-4-3-2-1 grounding technique",
+            "Do box breathing (4-4-4-4 pattern)",
+            "Go for a short walk",
+            "Write down your worries and challenge each one",
+            "Call a friend or family member",
+            "Limit caffeine intake",
+            "Progressive muscle relaxation"
+        ]
+    },
+    "sadness": {
+        "title": "Coping with Sadness",
+        "strategies": [
+            "Let yourself feel it—crying is okay",
+            "Reach out to someone you trust",
+            "Do one small act of self-care",
+            "Listen to music that matches or shifts your mood",
+            "Write in a journal without judgment",
+            "Get some sunlight or fresh air",
+            "Be gentle with yourself"
+        ]
+    },
+    "anger": {
+        "title": "Coping with Anger",
+        "strategies": [
+            "Remove yourself from the situation if possible",
+            "Physical exercise or movement",
+            "Write an angry letter you won't send",
+            "Use cold water on your face or wrists",
+            "Count to 10 before responding",
+            "Deep breathing exercises",
+            "Identify the underlying emotion"
+        ]
+    },
+    "overwhelm": {
+        "title": "Coping with Overwhelm",
+        "strategies": [
+            "Brain dump everything on your mind",
+            "Pick ONE thing to focus on",
+            "Break tasks into smaller steps",
+            "It's okay to ask for an extension",
+            "5 minutes of deep breathing",
+            "Step away from the situation briefly",
+            "Ask for help"
+        ]
+    },
+    "general": {
+        "title": "General Coping Strategies",
+        "strategies": [
+            "Movement—even a short walk helps",
+            "Deep breathing exercises",
+            "Talk to someone you trust",
+            "Write it out in a journal",
+            "Do something with your hands (draw, craft, cook)",
+            "Change your environment",
+            "Practice self-compassion",
+            "Limit social media",
+            "Get outside in nature",
+            "Progressive muscle relaxation"
+        ]
+    }
 }
 
 # ============================================================================
 # USER SESSION MANAGEMENT
 # ============================================================================
 
+user_sessions = {}
+
 def get_user_session():
     """Get or create user session data."""
-    if "user_data" not in cl.user_session:
-        cl.user_session["user_data"] = {
+    session_id = cl.user_session.get("id", "default")
+    if session_id not in user_sessions:
+        user_sessions[session_id] = {
             "mood_history": [],
             "conversation_history": [],
-            "challenge_day": 0,
-            "challenge_started": None,
-            "journal_entries": [],
-            "preferences": {}
+            "challenge_day": 1,
+            "challenge_started": None
         }
-    return cl.user_session["user_data"]
+    return user_sessions[session_id]
 
 
 def add_to_conversation(role: str, content: str):
@@ -990,13 +1067,12 @@ def add_to_conversation(role: str, content: str):
     session["conversation_history"] = session["conversation_history"][-20:]
 
 
-def log_mood(mood: str, intensity: int, notes: str = ""):
+def log_mood(mood: str, intensity: int):
     """Log a mood entry."""
     session = get_user_session()
     session["mood_history"].append({
         "mood": mood,
         "intensity": intensity,
-        "notes": notes,
         "timestamp": datetime.now().isoformat()
     })
 
@@ -1011,15 +1087,15 @@ def detect_scenario(message: str) -> Optional[str]:
     
     scenario_keywords = {
         "exam_anxiety": ["exam", "test", "finals", "midterm", "grade", "gpa", "study", "fail class"],
-        "loneliness": ["lonely", "alone", "no friends", "isolated", "left out", "nobody"],
+        "loneliness": ["lonely", "alone", "no friends", "isolated", "left out", "nobody likes"],
         "homesickness": ["miss home", "homesick", "miss my family", "miss my mom", "miss my dad", "far from home"],
         "burnout": ["burnout", "burned out", "exhausted", "tired of everything", "can't keep up", "overwhelmed"],
-        "imposter_syndrome": ["imposter", "don't belong", "fraud", "not smart enough", "everyone else", "mistake"],
-        "relationship_issues": ["relationship", "boyfriend", "girlfriend", "partner", "breakup", "broke up", "fight with"],
+        "imposter_syndrome": ["imposter", "don't belong", "fraud", "not smart enough", "everyone else is better", "mistake admitting me"],
+        "relationship_issues": ["relationship", "boyfriend", "girlfriend", "partner", "breakup", "broke up", "fight with", "roommate problem"],
         "depression_feelings": ["depressed", "depression", "hopeless", "empty", "numb", "don't care anymore", "what's the point"],
-        "sleep_issues": ["can't sleep", "insomnia", "sleep", "tired", "exhausted", "nightmares"],
-        "financial_stress": ["money", "afford", "broke", "debt", "loan", "financial", "pay for"],
-        "future_anxiety": ["future", "career", "job", "after graduation", "what am i doing", "life after college"]
+        "sleep_issues": ["can't sleep", "insomnia", "sleep", "tired", "exhausted", "nightmares", "sleeping too much"],
+        "financial_stress": ["money", "afford", "broke", "debt", "loan", "financial", "pay for", "expensive"],
+        "future_anxiety": ["future", "career", "job", "after graduation", "what am i doing", "life after college", "don't know what to do"]
     }
     
     for scenario, keywords in scenario_keywords.items():
@@ -1066,11 +1142,10 @@ async def get_ai_response(user_message: str, scenario: Optional[str] = None) -> 
             temperature=0.7,
             max_tokens=500
         )
-        # Handle the response properly (OpenAI v1.0+ uses attribute access)
         return response.choices[0].message.content
     except Exception as e:
-        print(f"OpenAI API Error: {e}")  # Log for debugging
-        return f"I'm having trouble connecting right now. Please try again in a moment. If you're in crisis, please reach out to a helpline. 💙"
+        print(f"OpenAI API Error: {e}")
+        return "I'm having trouble connecting right now. Please try again in a moment. If you're in crisis, please type 'crisis' for helpline numbers. 💙"
 
 
 # ============================================================================
@@ -1085,16 +1160,16 @@ def get_menu() -> str:
 Here's what I can help you with:
 
 **💬 Just Chat** — Tell me how you're feeling
-**📊 Mood** — Track and view your mood
-**🌱 Challenge** — Daily wellness challenge
-**📚 Resources** — Mental health topic library
-**🧘 Breathe** — Guided breathing exercises
-**🧘 Meditate** — Quick meditation scripts
-**📝 Journal** — Journaling prompts
-**💪 Coping** — Coping strategies
-**🆘 Crisis** — Crisis resources
+**📊 mood** — Track and view your mood
+**🌱 challenge** — Daily wellness challenge
+**📚 resources** — Mental health topic library
+**🧘 breathe** — Guided breathing exercises
+**🧘 meditate** — Quick meditation scripts
+**📝 journal** — Journaling prompts
+**💪 coping** — Coping strategies
+**🆘 crisis** — Crisis resources
 
-Just type what you need, or say what's on your mind. I'm here to listen. 💙
+Just type the command or tell me what's on your mind. I'm here to listen. 💙
 """
 
 
@@ -1107,7 +1182,7 @@ def get_resource_menu() -> str:
         title = RESOURCE_LIBRARY[topic]["title"]
         menu += f"{i}. {title}\n"
     
-    menu += "\nType the topic name (e.g., 'stress management') or number to view."
+    menu += "\nType the topic name (e.g., 'anxiety') or number to view."
     return menu
 
 
@@ -1125,7 +1200,7 @@ def get_resource(query: str) -> Optional[str]:
     except ValueError:
         pass
     
-    # Check by name
+    # Check by name (partial match)
     for key, value in RESOURCE_LIBRARY.items():
         if query_lower in key.lower() or query_lower in value["title"].lower():
             return value["content"]
@@ -1145,7 +1220,7 @@ def get_wellness_challenge(day: int = None) -> str:
         day = session["challenge_day"]
     
     if day < 1 or day > 30:
-        return "The 30-day challenge has days 1-30. Which day would you like to see?"
+        return "The 30-day challenge has days 1-30. Which day would you like to see? Type 'challenge [number]'"
     
     challenge = WELLNESS_CHALLENGES[day - 1]
     affirmation = random.choice(DAILY_AFFIRMATIONS)
@@ -1162,7 +1237,7 @@ def get_wellness_challenge(day: int = None) -> str:
 *"{affirmation}"*
 
 ---
-Type **'next challenge'** when you're ready for tomorrow's challenge.
+Type **'next challenge'** for tomorrow's challenge.
 Type **'challenge [number]'** to see a specific day.
 """
 
@@ -1201,61 +1276,75 @@ Take a few minutes to reflect on one or more of these:
 
 def get_coping_strategies(emotion: str = None) -> str:
     """Get coping strategies, optionally for a specific emotion."""
-    strategies = {
-        "anxiety": [
-            "Try the 5-4-3-2-1 grounding technique",
-            "Do box breathing (4-4-4-4 pattern)",
-            "Go for a short walk",
-            "Write down your worries and challenge each one",
-            "Call a friend or family member"
-        ],
-        "sadness": [
-            "Let yourself feel it—crying is okay",
-            "Reach out to someone you trust",
-            "Do one small act of self-care",
-            "Listen to music that matches or shifts your mood",
-            "Write in a journal without judgment"
-        ],
-        "anger": [
-            "Remove yourself from the situation if possible",
-            "Physical exercise or movement",
-            "Write an angry letter you won't send",
-            "Use cold water on your face or wrists",
-            "Count to 10 before responding"
-        ],
-        "overwhelm": [
-            "Brain dump everything on your mind",
-            "Pick ONE thing to focus on",
-            "Break tasks into smaller steps",
-            "It's okay to ask for an extension",
-            "5 minutes of deep breathing"
-        ],
-        "general": [
-            "Movement—even a short walk helps",
-            "Deep breathing exercises",
-            "Talk to someone you trust",
-            "Write it out",
-            "Do something with your hands (draw, craft, cook)",
-            "Change your environment",
-            "Practice self-compassion",
-            "Limit social media",
-            "Get outside in nature",
-            "Progressive muscle relaxation"
-        ]
-    }
-    
-    if emotion and emotion.lower() in strategies:
-        selected = strategies[emotion.lower()]
-        title = f"Coping with {emotion.title()}"
+    if emotion and emotion.lower() in COPING_STRATEGIES:
+        data = COPING_STRATEGIES[emotion.lower()]
     else:
-        selected = strategies["general"]
-        title = "Coping Strategies"
+        data = COPING_STRATEGIES["general"]
     
-    response = f"**💪 {title}**\n\n"
-    for i, strategy in enumerate(selected, 1):
+    response = f"**💪 {data['title']}**\n\n"
+    for i, strategy in enumerate(data['strategies'], 1):
         response += f"{i}. {strategy}\n"
     
-    response += "\nWould you like me to explain any of these in more detail?"
+    if emotion is None:
+        response += "\nFor specific strategies, type: **coping anxiety**, **coping sadness**, **coping anger**, or **coping overwhelm**"
+    
+    return response
+
+
+def get_breathing_menu() -> str:
+    """Return breathing exercises menu."""
+    return """
+**🧘 Breathing Exercises**
+
+Choose an exercise:
+
+• **box** — Box Breathing (4 min) — Used by Navy SEALs to stay calm
+• **478** — 4-7-8 Breathing (3 min) — Great for anxiety and sleep
+• **grounding** — 5-4-3-2-1 Grounding (5 min) — Brings you to the present
+
+Type the exercise name to begin.
+"""
+
+
+def get_meditation_menu() -> str:
+    """Return meditation menu."""
+    return """
+**🧘 Quick Meditations**
+
+Choose a meditation:
+
+• **calm** — 2-Minute Calm — Quick reset
+• **body scan** — Body Scan — Release tension
+• **self compassion** — Self-Compassion — Be kind to yourself
+
+Type the meditation name to begin.
+"""
+
+
+def get_mood_prompt() -> str:
+    """Return mood tracking prompt."""
+    session = get_user_session()
+    
+    response = "**📊 Mood Check-In**\n\n"
+    
+    # Show recent history if exists
+    if session["mood_history"]:
+        response += "**Recent Mood History:**\n"
+        recent = session["mood_history"][-5:]
+        for m in recent:
+            response += f"• {m['timestamp'][:10]}: {m['mood']} ({m['intensity']}/5)\n"
+        response += "\n"
+    
+    response += """How are you feeling right now? Rate your mood:
+
+1️⃣ Really struggling
+2️⃣ Not great
+3️⃣ Okay/Neutral
+4️⃣ Pretty good
+5️⃣ Great!
+
+Type a number (1-5), or just describe how you're feeling."""
+    
     return response
 
 
@@ -1266,15 +1355,8 @@ def get_coping_strategies(emotion: str = None) -> str:
 @cl.on_chat_start
 async def on_chat_start():
     """Initialize the chat session."""
-    # Set up quick action buttons
-    actions = [
-        cl.Action(name="menu", payload="menu", label="📋 Menu"),
-        cl.Action(name="mood", payload="mood", label="📊 Track Mood"),
-        cl.Action(name="challenge", payload="challenge", label="🌱 Challenge"),
-        cl.Action(name="resources", payload="resources", label="📚 Resources"),
-        cl.Action(name="breathe", payload="breathe", label="🧘 Breathe"),
-        cl.Action(name="crisis", payload="crisis", label="🆘 Crisis Help"),
-    ]
+    # Generate a session ID
+    cl.user_session.set("id", str(datetime.now().timestamp()))
     
     welcome_message = """
 **🌿 Welcome to CalmSpace**
@@ -1283,77 +1365,23 @@ I'm here to support you through whatever you're experiencing—stress, anxiety, 
 
 **This is a safe, judgment-free space.** 💙
 
-You can:
-• Just tell me how you're feeling
-• Ask for coping strategies
-• Track your mood
-• Try guided exercises
-• Browse mental health resources
+**Commands you can use:**
+• **menu** — See all options
+• **mood** — Track your mood
+• **challenge** — Daily wellness challenge
+• **resources** — Browse mental health topics
+• **breathe** — Breathing exercises
+• **meditate** — Quick meditations
+• **journal** — Journal prompts
+• **coping** — Coping strategies
+• **crisis** — Crisis helplines
 
-**How are you doing today?**
+Or just tell me how you're feeling. **How are you doing today?**
 
-*Note: I'm an AI companion, not a replacement for professional help. If you're in crisis, I'll connect you with real support.*
+*Note: I'm an AI companion, not a replacement for professional help. If you're in crisis, type 'crisis' for immediate resources.*
 """
     
-    await cl.Message(
-        content=welcome_message,
-        actions=actions
-    ).send()
-
-
-@cl.action_callback("menu")
-async def on_menu_action(action):
-    await cl.Message(content=get_menu()).send()
-
-
-@cl.action_callback("mood")
-async def on_mood_action(action):
-    mood_prompt = """
-**📊 Mood Check-In**
-
-How are you feeling right now? Rate your mood:
-
-1️⃣ Really struggling
-2️⃣ Not great
-3️⃣ Okay/Neutral
-4️⃣ Pretty good
-5️⃣ Great!
-
-Type a number, or just describe how you're feeling in words.
-"""
-    await cl.Message(content=mood_prompt).send()
-
-
-@cl.action_callback("challenge")
-async def on_challenge_action(action):
-    response = get_wellness_challenge()
-    await cl.Message(content=response).send()
-
-
-@cl.action_callback("resources")
-async def on_resources_action(action):
-    await cl.Message(content=get_resource_menu()).send()
-
-
-@cl.action_callback("breathe")
-async def on_breathe_action(action):
-    breathe_menu = """
-**🧘 Breathing Exercises**
-
-Choose an exercise:
-
-1. **Box Breathing** (4 min) — Used by Navy SEALs to stay calm
-2. **4-7-8 Breathing** (3 min) — Great for anxiety and sleep
-3. **5-4-3-2-1 Grounding** (5 min) — Brings you to the present
-
-Type the number or name to begin.
-"""
-    await cl.Message(content=breathe_menu).send()
-
-
-@cl.action_callback("crisis")
-async def on_crisis_action(action):
-    await cl.Message(content=CRISIS_RESOURCES).send()
+    await cl.Message(content=welcome_message).send()
 
 
 @cl.on_message
@@ -1365,7 +1393,7 @@ async def on_message(message: cl.Message):
     # Add to conversation history
     add_to_conversation("user", user_msg)
     
-    # Check for crisis first
+    # ===== CRISIS CHECK (ALWAYS FIRST) =====
     if check_crisis(user_msg):
         crisis_response = f"""
 I hear that you're going through something really difficult right now, and I'm genuinely concerned about you. 💙
@@ -1380,20 +1408,25 @@ I'm here if you want to talk, but please also reach out to one of these resource
         add_to_conversation("assistant", crisis_response)
         return
     
-    # Command handling
-    if user_msg_lower in ["menu", "help", "options", "/menu", "/help"]:
+    # ===== COMMAND HANDLING =====
+    
+    # Menu
+    if user_msg_lower in ["menu", "help", "options", "/menu", "/help", "start"]:
         await cl.Message(content=get_menu()).send()
         return
     
+    # Resources
     if user_msg_lower in ["resources", "resource", "library", "topics", "/resources"]:
         await cl.Message(content=get_resource_menu()).send()
         return
     
+    # Challenge
     if user_msg_lower in ["challenge", "wellness", "daily", "/challenge"]:
         response = get_wellness_challenge()
         await cl.Message(content=response).send()
         return
     
+    # Challenge with day number
     if user_msg_lower.startswith("challenge "):
         try:
             day = int(user_msg_lower.split(" ")[1])
@@ -1403,98 +1436,78 @@ I'm here if you want to talk, but please also reach out to one of these resource
         except:
             pass
     
-    if user_msg_lower == "next challenge":
+    # Next challenge
+    if user_msg_lower in ["next challenge", "next", "tomorrow"]:
         session = get_user_session()
         session["challenge_day"] = min(session["challenge_day"] + 1, 30)
         response = get_wellness_challenge()
         await cl.Message(content=response).send()
         return
     
+    # Journal
     if user_msg_lower in ["journal", "journal prompts", "prompts", "/journal"]:
         response = get_journal_prompts()
         await cl.Message(content=response).send()
         return
     
+    # Breathe menu
     if user_msg_lower in ["breathe", "breathing", "breath", "/breathe"]:
-        breathe_menu = """
-**🧘 Breathing Exercises**
-
-Choose an exercise:
-
-1. **Box Breathing** (4 min) — Calm under pressure
-2. **4-7-8 Breathing** (3 min) — Anxiety and sleep
-3. **5-4-3-2-1 Grounding** (5 min) — Present moment
-
-Type the number or name.
-"""
-        await cl.Message(content=breathe_menu).send()
+        await cl.Message(content=get_breathing_menu()).send()
         return
     
-    if user_msg_lower in ["1", "box", "box breathing"]:
-        await cl.Message(content=BREATHING_EXERCISES["box_breathing"]["steps"]).send()
+    # Specific breathing exercises
+    if user_msg_lower in ["box", "box breathing"]:
+        await cl.Message(content=BREATHING_EXERCISES["box"]["content"]).send()
         return
     
-    if user_msg_lower in ["2", "478", "4-7-8", "4 7 8"]:
-        await cl.Message(content=BREATHING_EXERCISES["478_breathing"]["steps"]).send()
+    if user_msg_lower in ["478", "4-7-8", "4 7 8"]:
+        await cl.Message(content=BREATHING_EXERCISES["478"]["content"]).send()
         return
     
-    if user_msg_lower in ["3", "grounding", "5-4-3-2-1", "54321"]:
-        await cl.Message(content=BREATHING_EXERCISES["grounding"]["steps"]).send()
+    if user_msg_lower in ["grounding", "5-4-3-2-1", "54321", "ground"]:
+        await cl.Message(content=BREATHING_EXERCISES["grounding"]["content"]).send()
         return
     
+    # Meditate menu
     if user_msg_lower in ["meditate", "meditation", "/meditate"]:
-        med_menu = """
-**🧘 Quick Meditations**
-
-1. **2-Minute Calm** — Quick reset
-2. **Body Scan** — Release tension
-3. **Self-Compassion** — Be kind to yourself
-
-Type the number or name.
-"""
-        await cl.Message(content=med_menu).send()
+        await cl.Message(content=get_meditation_menu()).send()
         return
     
-    if "calm" in user_msg_lower and "minute" in user_msg_lower:
-        await cl.Message(content=MEDITATION_SCRIPTS["quick_calm"]).send()
+    # Specific meditations
+    if user_msg_lower in ["calm", "2 minute calm", "2-minute calm", "quick calm"]:
+        await cl.Message(content=MEDITATION_SCRIPTS["calm"]["content"]).send()
         return
     
-    if "body scan" in user_msg_lower:
-        await cl.Message(content=MEDITATION_SCRIPTS["body_scan"]).send()
+    if user_msg_lower in ["body scan", "bodyscan", "body"]:
+        await cl.Message(content=MEDITATION_SCRIPTS["body scan"]["content"]).send()
         return
     
-    if "self compassion" in user_msg_lower or "self-compassion" in user_msg_lower:
-        await cl.Message(content=MEDITATION_SCRIPTS["self_compassion"]).send()
+    if user_msg_lower in ["self compassion", "self-compassion", "compassion"]:
+        await cl.Message(content=MEDITATION_SCRIPTS["self compassion"]["content"]).send()
         return
     
+    # Coping strategies
     if user_msg_lower in ["coping", "cope", "strategies", "/coping"]:
         await cl.Message(content=get_coping_strategies()).send()
         return
     
+    # Emotion-specific coping
     if user_msg_lower.startswith("coping "):
         emotion = user_msg_lower.replace("coping ", "").strip()
         await cl.Message(content=get_coping_strategies(emotion)).send()
         return
     
-    if user_msg_lower in ["crisis", "emergency", "help now", "/crisis"]:
+    # Crisis
+    if user_msg_lower in ["crisis", "emergency", "help now", "/crisis", "helpline", "helplines"]:
         await cl.Message(content=CRISIS_RESOURCES).send()
         return
     
-    if user_msg_lower in ["mood", "track mood", "how am i", "/mood"]:
-        session = get_user_session()
-        if session["mood_history"]:
-            recent = session["mood_history"][-5:]
-            history = "\n".join([
-                f"• {m['timestamp'][:10]}: {m['mood']} ({m['intensity']}/5)"
-                for m in recent
-            ])
-            response = f"**📊 Recent Mood History:**\n\n{history}\n\nHow are you feeling now? (1-5 or describe)"
-        else:
-            response = "**📊 Mood Check-In**\n\nHow are you feeling? Rate 1-5 or just describe it."
-        await cl.Message(content=response).send()
+    # Mood tracking
+    if user_msg_lower in ["mood", "track mood", "how am i", "/mood", "mood check"]:
+        await cl.Message(content=get_mood_prompt()).send()
         return
     
-    # Check if it's a mood rating
+    # Mood rating (1-5)
     if user_msg_lower in ["1", "2", "3", "4", "5"]:
         mood_labels = {
             "1": "struggling",
@@ -1504,42 +1517,37 @@ Type the number or name.
             "5": "great"
         }
         mood = mood_labels[user_msg_lower]
-        log_mood(mood, int(user_msg_lower))
+        intensity = int(user_msg_lower)
+        log_mood(mood, intensity)
         
-        if int(user_msg_lower) <= 2:
+        if intensity <= 2:
             response = f"Thank you for sharing. I've logged that you're feeling {mood}. That takes courage to acknowledge. 💙\n\nWould you like to talk about what's going on? I'm here to listen."
+        elif intensity == 3:
+            response = f"Logged: Feeling {mood}. 💙\n\nSometimes 'okay' is just fine. Is there anything specific on your mind today?"
         else:
-            response = f"Logged: Feeling {mood}! 💙\n\nIs there anything on your mind you'd like to talk about?"
+            response = f"Logged: Feeling {mood}! 💙 That's wonderful to hear.\n\nIs there anything you'd like to chat about, or would you like to try today's wellness challenge?"
         
         await cl.Message(content=response).send()
+        add_to_conversation("assistant", response)
         return
     
-    # Check if it's a resource request
+    # Check if it's a resource request (by number or name)
     resource = get_resource(user_msg)
     if resource:
         await cl.Message(content=resource).send()
         return
     
-    # Detect scenario and get AI response
+    # ===== AI RESPONSE FOR GENERAL CHAT =====
+    
+    # Detect scenario for context-aware response
     scenario = detect_scenario(user_msg)
     
-    # Show typing indicator
-    async with cl.Step(name="Thinking..."):
-        response = await get_ai_response(user_msg, scenario)
+    # Get AI response
+    response = await get_ai_response(user_msg, scenario)
     
     add_to_conversation("assistant", response)
     
-    # Add quick actions based on context
-    actions = []
-    if any(word in user_msg_lower for word in ["anxious", "stressed", "panic", "overwhelmed"]):
-        actions.append(cl.Action(name="breathe", payload="breathe", label="🧘 Try Breathing Exercise"))
-    if any(word in user_msg_lower for word in ["sad", "down", "depressed", "low"]):
-        actions.append(cl.Action(name="resources", payload="resources", label="📚 View Resources"))
-    
-    await cl.Message(
-        content=response,
-        actions=actions if actions else None
-    ).send()
+    await cl.Message(content=response).send()
 
 
 # ============================================================================
